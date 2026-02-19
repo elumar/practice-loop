@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interview Practice</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #13161e;
+      --border:   #1e2330;
+      --accent:   #e8c87a;
+      --accent2:  #7ab8e8;
+      --danger:   #e87a7a;
+      --text:     #e8e6e0;
+      --muted:    #6b7280;
+      --radius:   12px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+    }
+
+    /* Subtle grid texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(232,200,122,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,200,122,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 56px;
+      text-align: center;
+    }
+
+    header .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 400;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+
+    header h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    header p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .filter-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+
+    /* ── MAIN CARD ── */
+    .card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .card.active { border-color: rgba(232,200,122,0.25); }
+    .card.warning { border-color: rgba(232,122,122,0.4); }
+
+    /* Card top bar */
+    .card-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      min-height: 48px;
+    }
+
+    .category-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent2);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .category-tag.visible { opacity: 1; }
+
+    /* Timer */
+    .timer-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      opacity: 0;
+      transition: opacity 0.3s, color 0.3s;
+      min-width: 64px;
+      text-align: right;
+    }
+    .timer-display.visible { opacity: 1; }
+    .timer-display.warning { color: var(--danger); }
+
+    /* Progress ring */
+    .timer-ring {
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .timer-ring.visible { display: flex; }
+
+    .ring-wrap {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .ring-wrap.visible { opacity: 1; }
+
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: var(--border); stroke-width: 3; }
+    .ring-fill {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 88;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+    .ring-fill.warning { stroke: var(--danger); }
+
+    /* Card body */
+    .card-body {
+      padding: 40px 32px;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Idle state */
+    .idle-state {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .idle-state .idle-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 20px;
+    }
+
+    .idle-state p {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 280px;
+      line-height: 1.6;
+    }
+
+    /* Question text */
+    .question-text {
+      display: none;
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: 400;
+      line-height: 1.5;
+      color: var(--text);
+      text-align: center;
+      animation: fadeUp 0.4s ease both;
+    }
+    .question-text.visible { display: block; }
+
+    /* Follow-up state */
+    .followup-container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      animation: fadeUp 0.4s ease both;
+    }
+    .followup-container.visible { display: flex; }
+
+    .followup-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent2);
+    }
+
+    .followup-text {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(17px, 2.8vw, 22px);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Elapsed time badge */
+    .elapsed-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: rgba(122,184,232,0.06);
+    }
+    .elapsed-badge.visible { display: flex; }
+    .elapsed-badge span {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--accent2);
+    }
+
+    /* Card footer */
+    .card-footer {
+      padding: 20px 32px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px 28px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: #f0d48a; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(232,200,122,0.25); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(232,122,122,0.3);
+    }
+    .btn-danger:hover { background: rgba(232,122,122,0.1); }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      width: 100%;
+      max-width: 680px;
+      margin-top: 24px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+    }
+
+    .stat-pill .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .stat-pill .stat-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-warning {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .timer-display.pulse { animation: pulse-warning 0.8s ease infinite; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .card-body { padding: 32px 20px; }
+      .card-footer { padding: 16px 20px; }
+      .card-bar { padding: 12px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <p class="eyebrow">Interview Practice Tool</p>
+    <h1>Answer with <em>confidence.</em></h1>
+    <p>Draw a question, start the timer, and practice your response. Follow-up questions simulate real interview pressure.</p>
+  </header>
+
+  <!-- Filter bar populated by JS -->
+  <div class="filter-bar" id="filterBar"></div>
+
+  <!-- Main card -->
+  <div class="card" id="mainCard">
+
+    <div class="card-bar">
+      <span class="category-tag" id="categoryTag"></span>
+      <div class="timer-ring" id="timerRing">
+        <div class="ring-wrap" id="ringWrap">
+          <svg width="36" height="36" viewBox="0 0 36 36">
+            <circle class="ring-bg" cx="18" cy="18" r="14"/>
+            <circle class="ring-fill" id="ringFill" cx="18" cy="18" r="14"/>
+          </svg>
+        </div>
+        <span class="timer-display" id="timerDisplay">0:00</span>
+      </div>
+    </div>
+
+    <div class="card-body" id="cardBody">
+      <div class="idle-state" id="idleState">
+        <div class="idle-icon">◎</div>
+        <p>Select a category filter above, then draw your first question.</p>
+      </div>
+
+      <div class="question-text" id="questionText"></div>
+
+      <div class="followup-container" id="followupContainer">
+        <div class="elapsed-badge visible" id="elapsedBadge">
+          <span id="elapsedText">Answered in 0:00</span>
+        </div>
+        <span class="followup-label">Follow-up</span>
+        <div class="followup-text" id="followupText"></div>
+      </div>
+    </div>
+
+    <div class="card-footer" id="cardFooter">
+      <button class="btn btn-primary" id="drawBtn" onclick="drawQuestion()">Draw Question</button>
+    </div>
+
+  </div>
+
+  <!-- Session stats -->
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <span class="stat-label">Answered</span>
+      <span class="stat-value" id="statAnswered">0</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-label">Category</span>
+      <span class="stat-value" id="statCategory">—</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-label">Avg Time</span>
+      <span class="stat-value" id="statAvg">—</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let questions     = [];
+let filtered      = [];
+let activeFilter  = 'All';
+let currentQ      = null;
+let timerInterval = null;
+let elapsed       = 0;
+let totalTime     = 0;
+let answeredCount = 0;
+let maxTime       = 0;
+let phase         = 'idle'; // idle | question | followup
+
+// ── CSV PARSER ─────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"' && !inQ) { inQ = true; continue; }
+    if (c === '"' && inQ)  { inQ = false; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────────
+async function loadQuestions() {
+  try {
+    const res  = await fetch('questions.csv');
+    const text = await res.text();
+    questions  = parseCSV(text);
+    filtered   = [...questions];
+    buildFilters();
+  } catch(e) {
+    // Fallback if CSV not found
+    document.getElementById('idleState').querySelector('p').textContent =
+      'Could not load questions.csv. Make sure it is in the same folder as this file.';
+  }
+}
+
+// ── FILTERS ───────────────────────────────────────────────────
+function buildFilters() {
+  const cats = ['All', ...new Set(questions.map(q => q.category))];
+  const bar  = document.getElementById('filterBar');
+  bar.innerHTML = '';
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (cat === 'All' ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => setFilter(cat);
+    bar.appendChild(btn);
+  });
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  filtered = cat === 'All' ? [...questions] : questions.filter(q => q.category === cat);
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === cat);
+  });
+  document.getElementById('statCategory').textContent = cat === 'All' ? '—' : cat;
+}
+
+// ── TIMER ─────────────────────────────────────────────────────
+function startTimer(seconds) {
+  maxTime = seconds;
+  elapsed = 0;
+  clearInterval(timerInterval);
+
+  const display  = document.getElementById('timerDisplay');
+  const ringFill = document.getElementById('ringFill');
+  const card     = document.getElementById('mainCard');
+  const CIRC     = 88; // 2π × r(14) ≈ 87.96
+
+  display.classList.add('visible');
+  document.getElementById('timerRing').classList.add('visible');
+  document.getElementById('ringWrap').classList.add('visible');
+
+  timerInterval = setInterval(() => {
+    elapsed++;
+    const remaining = maxTime - elapsed;
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    display.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+
+    const progress = elapsed / maxTime;
+    ringFill.style.strokeDashoffset = CIRC * progress;
+
+    const warn = remaining <= 20;
+    display.classList.toggle('warning', warn);
+    display.classList.toggle('pulse',   warn);
+    ringFill.classList.toggle('warning', warn);
+    card.classList.toggle('warning',    warn);
+
+    if (remaining <= 0) stopTimer();
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  const display = document.getElementById('timerDisplay');
+  display.classList.remove('pulse', 'warning');
+  document.getElementById('ringFill').classList.remove('warning');
+  document.getElementById('mainCard').classList.remove('warning');
+}
+
+// ── DRAW QUESTION ─────────────────────────────────────────────
+function drawQuestion() {
+  if (!filtered.length) return;
+  stopTimer();
+
+  currentQ = filtered[Math.floor(Math.random() * filtered.length)];
+  phase    = 'question';
+
+  // UI updates
+  document.getElementById('idleState').style.display     = 'none';
+  document.getElementById('followupContainer').classList.remove('visible');
+  document.getElementById('questionText').classList.add('visible');
+  document.getElementById('questionText').textContent    = currentQ.question;
+
+  document.getElementById('categoryTag').textContent = currentQ.category;
+  document.getElementById('categoryTag').classList.add('visible');
+
+  document.getElementById('mainCard').classList.add('active');
+  document.getElementById('mainCard').classList.remove('warning');
+
+  setFooter('question');
+  startTimer(parseInt(currentQ.time_seconds) || 120);
+}
+
+// ── ANSWERED ──────────────────────────────────────────────────
+function markAnswered() {
+  stopTimer();
+
+  answeredCount++;
+  totalTime += elapsed;
+  const avgSecs  = Math.round(totalTime / answeredCount);
+  const avgMins  = Math.floor(avgSecs / 60);
+  const avgRem   = avgSecs % 60;
+
+  document.getElementById('statAnswered').textContent = answeredCount;
+  document.getElementById('statAvg').textContent      = `${avgMins}:${avgRem.toString().padStart(2,'0')}`;
+
+  // Show elapsed
+  const em   = Math.floor(elapsed / 60);
+  const es   = elapsed % 60;
+  document.getElementById('elapsedText').textContent  = `Answered in ${em}:${es.toString().padStart(2,'0')}`;
+
+  // Check for follow-up
+  const followups = currentQ.followups
+    ? currentQ.followups.split('|').map(f => f.trim()).filter(Boolean)
+    : [];
+
+  document.getElementById('questionText').classList.remove('visible');
+
+  if (followups.length) {
+    const fu = followups[Math.floor(Math.random() * followups.length)];
+    document.getElementById('followupText').textContent = fu;
+    document.getElementById('followupContainer').classList.add('visible');
+    phase = 'followup';
+    setFooter('followup');
+    startTimer(60);
+  } else {
+    phase = 'idle';
+    setFooter('post');
+  }
+}
+
+// ── FOLLOW-UP ANSWERED ────────────────────────────────────────
+function followupAnswered() {
+  stopTimer();
+  phase = 'post';
+  setFooter('post');
+}
+
+// ── FOOTER STATES ─────────────────────────────────────────────
+function setFooter(state) {
+  const footer = document.getElementById('cardFooter');
+  if (state === 'question') {
+    footer.innerHTML = `
+      <button class="btn btn-secondary" onclick="drawQuestion()">Skip</button>
+      <button class="btn btn-primary" onclick="markAnswered()">Answered</button>
+    `;
+  } else if (state === 'followup') {
+    footer.innerHTML = `
+      <button class="btn btn-primary" onclick="followupAnswered()">Answered Follow-up</button>
+    `;
+  } else {
+    footer.innerHTML = `
+      <button class="btn btn-primary" onclick="drawQuestion()">Next Question</button>
+    `;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+loadQuestions();
+</script>
+</body>
+</html>
